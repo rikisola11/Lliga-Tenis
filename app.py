@@ -21,28 +21,27 @@ df_complet = carregar_dades()
 if df_complet is not None and not df_complet.empty:
     st.success("✅ Dades carregades correctament des del Google Drive!")
     
-    # 1. TAULA DE PARTITS I RESULTATS
+    # 1. TAULA DE PARTITS I RESULTATS (Files 0 a 4, Columnes 0 a 13)
     st.subheader("📊 Partits i Resultats")
-    # Agafem només les primeres columnes (de la 0 a la 12) i les files de partits
-    if df_complet.shape[1] >= 13:
-        df_partits = df_complet.iloc[0:4, 0:13].copy()
-        # Posem la primera fila com a capçalera de la taula
-        df_partits.columns = df_partits.iloc[0]
+    try:
+        # Seleccionem només les primeres columnes on hi ha els camps i hores
+        df_partits = df_complet.iloc[0:4, 0:13].dropna(how='all').copy()
+        df_partits.columns = df_partits.iloc[0] # Primera fila com a capçalera
         df_partits = df_partits.iloc[1:].reset_index(drop=True)
         st.dataframe(df_partits, use_container_width=True, hide_index=True)
-    else:
-        st.warning("No s'han trobat suficients columnes per als partits.")
+    except Exception as e:
+        st.error("Error carregant la taula de partits.")
 
-    # 2. TAULA DE PENALITZACIONS I SOPAR (a sota o a la dreta)
+    # 2. TAULA DE PENALITZACIONS I SOPAR (A partir de la fila 8, columnes de l'esquerra)
     st.subheader("🍽️ Penalitzacions i Sopar")
     try:
-        # Extrec les columnes de la dreta on tens les penalitzacions i el sopar
-        df_penal = df_complet.iloc[6:11, [0, 1, 2]].copy()
+        # Busquem on comença la taula de penalitzacions per les primeres columnes
+        df_penal = df_complet.iloc[8:, 0:3].copy()
         df_penal.columns = ["Jugador", "Sopar Previ", "Sopar Jornada 1"]
-        df_penal = df_penal.dropna(how='all').reset_index(drop=True)
+        df_penal = df_penal.dropna(subset=["Jugador"]).reset_index(drop=True)
         st.dataframe(df_penal, use_container_width=True, hide_index=True)
-    except Exception:
-        st.info("Pendent de definir el format de penalitzacions.")
+    except Exception as e:
+        st.error("Error carregant la taula de penalitzacions.")
         
 else:
-    st.warning("⚠️️ No s'han pogut carregar les dades. Revisa els permisos del Google Sheets.")
+    st.warning("⚠️ No s'han pogut carregar les dades. Revisa els permisos del Google Sheets.")
