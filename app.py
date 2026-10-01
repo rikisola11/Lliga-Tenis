@@ -21,55 +21,10 @@ df_complet = carregar_dades()
 
 if df_complet is not None and not df_complet.empty:
     st.selectbox("Selecciona la Jornada", ["JORNADA 1"])
-    st.markdown("### 📌 JORNADA 1")
+    st.markdown("### 📌 JORNADA 1 - Vista de Depuració (Per veure on està tot)")
     
-    try:
-        # Busquem la fila exacta on apareix "19:15" per la meitat dreta o evitant la fila 0
-        # O més senzill: busquem on la cel·la de la columna 0 té exactament longitud de text curta (com "19:15")
-        col_0 = df_complet.iloc[:, 0].astype(str).str.strip()
-        mask_hores = col_0.str.contains("19:15|19:45|20:15", regex=True) & (col_0.str.len() <= 8)
-        
-        # Si trobem les hores per fila:
-        files_hores = df_complet[mask_hores].index
-        
-        if len(files_hores) >= 3:
-            brut_partits = df_complet.loc[files_hores].head(3).copy()
-        else:
-            # Fallback segur basat en la posició que hem vist a la teva captura de l'Excel
-            # On les hores estan exactament a les files 1, 2 i 3 (índexs)
-            brut_partits = df_complet.iloc[1:4, :].copy()
-
-        taula_final = pd.DataFrame({
-            "Hora": brut_partits.iloc[:, 0].values,
-            "Camp 1": brut_partits.iloc[:, 1].astype(str).str.strip() + " / " + brut_partits.iloc[:, 2].astype(str).str.strip(),
-            "Res. C1": brut_partits.iloc[:, 3].values,
-            "Camp 2": brut_partits.iloc[:, 4].astype(str).str.strip() + " / " + brut_partits.iloc[:, 5].astype(str).str.strip(),
-            "Res. C2": brut_partits.iloc[:, 6].values,
-            "Camp 3": brut_partits.iloc[:, 7].astype(str).str.strip() + " / " + brut_partits.iloc[:, 8].astype(str).str.strip(),
-            "Res. C3": brut_partits.iloc[:, 9].values,
-            "Camp 4": brut_partits.iloc[:, 10].astype(str).str.strip() + " / " + brut_partits.iloc[:, 11].astype(str).str.strip(),
-            "Res. C4": brut_partits.iloc[:, 12].values
-        })
-        
-        st.dataframe(taula_final, use_container_width=True, hide_index=True)
-            
-    except Exception as e:
-        st.error(f"Error al carregar els partits: {e}")
-
-    st.markdown("---")
-    st.subheader("🍽️ Penalitzacions i Sopars")
-    try:
-        mask_penal = df_complet.apply(lambda row: row.astype(str).str.contains("Penalitzac", case=False).any(), axis=1)
-        idx_penal = df_complet[mask_penal].index
-        
-        if len(idx_penal) > 0:
-            start_row = idx_penal[0] + 2 
-            df_penal = df_complet.iloc[start_row:, [0, 1, 2]].copy()
-            df_penal.columns = ["Jugador", "Sopar Previ", "Sopar Jornada 1"]
-            df_penal = df_penal.dropna(subset=["Jugador"]).reset_index(drop=True)
-            st.dataframe(df_penal, use_container_width=True, hide_index=True)
-    except Exception:
-        pass
+    # Això ens mostrarà tot el Google Sheets numerat per files i columnes
+    st.dataframe(df_complet, use_container_width=True)
         
 else:
     st.warning("⚠️ No s'han pogut carregar les dades. Revisa els permisos del Google Sheets.")
