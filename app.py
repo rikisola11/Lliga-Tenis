@@ -21,32 +21,28 @@ df_complet = carregar_dades()
 if df_complet is not None and not df_complet.empty:
     st.success("✅ Dades carregades correctament des del Google Drive!")
     
-    # Busquem automàticament on comença la fila de "Penalitzacions"
-    idx_penalitzacions = df_complet[df_complet.isin(['Penalitzacions per jugador']).any(axis=1)].index
-    
-    if len(idx_penalitzacions) > 0:
-        corte = idx_penalitzacions[0]
-        # Tot el que està abans de penalitzacions són els partits
-        df_partits = df_complet.iloc[:corte].dropna(how='all')
-        
-        # Tot el que està a partir de penalitzacions és l'altra taula
-        df_penal = df_complet.iloc[corte:].dropna(how='all')
-    else:
-        df_partits = df_complet
-        df_penal = pd.DataFrame()
-
-    # Mostrem la taula de Partits neta
+    # 1. TAULA DE PARTITS I RESULTATS
     st.subheader("📊 Partits i Resultats")
-    if not df_partits.empty:
-        # Netegem la primera fila com a capçalera si escau
-        df_partits = df_partits.dropna(how='all', axis=1)
+    # Agafem només les primeres columnes (de la 0 a la 12) i les files de partits
+    if df_complet.shape[1] >= 13:
+        df_partits = df_complet.iloc[0:4, 0:13].copy()
+        # Posem la primera fila com a capçalera de la taula
+        df_partits.columns = df_partits.iloc[0]
+        df_partits = df_partits.iloc[1:].reset_index(drop=True)
         st.dataframe(df_partits, use_container_width=True, hide_index=True)
-    
-    # Mostrem la taula de Penalitzacions / Sopar
-    if not df_penal.empty:
-        st.subheader("🍽️ Penalitzacions i Sopar")
-        df_penal = df_penal.dropna(how='all', axis=1)
+    else:
+        st.warning("No s'han trobat suficients columnes per als partits.")
+
+    # 2. TAULA DE PENALITZACIONS I SOPAR (a sota o a la dreta)
+    st.subheader("🍽️ Penalitzacions i Sopar")
+    try:
+        # Extrec les columnes de la dreta on tens les penalitzacions i el sopar
+        df_penal = df_complet.iloc[6:11, [0, 1, 2]].copy()
+        df_penal.columns = ["Jugador", "Sopar Previ", "Sopar Jornada 1"]
+        df_penal = df_penal.dropna(how='all').reset_index(drop=True)
         st.dataframe(df_penal, use_container_width=True, hide_index=True)
+    except Exception:
+        st.info("Pendent de definir el format de penalitzacions.")
         
 else:
-    st.warning("⚠️ No s'han pogut carregar les dades. Revisa els permisos del Google Sheets.")
+    st.warning("⚠️️ No s'han pogut carregar les dades. Revisa els permisos del Google Sheets.")
