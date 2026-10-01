@@ -24,30 +24,27 @@ if df_complet is not None and not df_complet.empty:
     st.markdown("### 📌 JORNADA 1")
     
     try:
-        # Busquem la fila exacta on comença l'horari "19:15"
-        mask_inici = df_complet.apply(lambda row: row.astype(str).str.contains("19:15", case=False).any(), axis=1)
-        idx_inici = df_complet[mask_inici].index
+        # Netegem la columna A convertint-la a string i buscant les hores exactes dels partits
+                        col_a = df_complet.iloc[:, 0].astype(str).str.strip()
+        mask_partits = col_a.isin(["19:15", "19:45", "20:15"])
+        brut_partits = df_complet[mask_partits].copy()
         
-        if len(idx_inici) > 0:
-            fila_inici = idx_inici[0]
-            # Agafem les 3 hores de partits consecutives a partir de la fila trobada
-            brut_partits = df_complet.iloc[fila_inici : fila_inici + 3, :].copy()
-            
+        if not brut_partits.empty:
             taula_final = pd.DataFrame({
                 "Hora": brut_partits.iloc[:, 0].values,
-                "Camp 1": brut_partits.iloc[:, 1].astype(str) + " - " + brut_partits.iloc[:, 2].astype(str),
+                "Camp 1": brut_partits.iloc[:, 1].astype(str).str.strip() + " / " + brut_partits.iloc[:, 2].astype(str).str.strip(),
                 "Res. C1": brut_partits.iloc[:, 3].values,
-                "Camp 2": brut_partits.iloc[:, 4].astype(str) + " - " + brut_partits.iloc[:, 5].astype(str),
+                "Camp 2": brut_partits.iloc[:, 4].astype(str).str.strip() + " / " + brut_partits.iloc[:, 5].astype(str).str.strip(),
                 "Res. C2": brut_partits.iloc[:, 6].values,
-                "Camp 3": brut_partits.iloc[:, 7].astype(str) + " - " + brut_partits.iloc[:, 8].astype(str),
+                "Camp 3": brut_partits.iloc[:, 7].astype(str).str.strip() + " / " + brut_partits.iloc[:, 8].astype(str).str.strip(),
                 "Res. C3": brut_partits.iloc[:, 9].values,
-                "Camp 4": brut_partits.iloc[:, 10].astype(str) + " - " + brut_partits.iloc[:, 11].astype(str),
+                "Camp 4": brut_partits.iloc[:, 10].astype(str).str.strip() + " / " + brut_partits.iloc[:, 11].astype(str).str.strip(),
                 "Res. C4": brut_partits.iloc[:, 12].values
             })
             
             st.dataframe(taula_final, use_container_width=True, hide_index=True)
         else:
-            st.warning("No s'ha trobat l'hora d'inici (19:15) al Google Sheets.")
+            st.warning("No s'han pogut filtrar les hores dels partits.")
             
     except Exception as e:
         st.error(f"Error al carregar els partits: {e}")
