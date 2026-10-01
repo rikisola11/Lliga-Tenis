@@ -24,14 +24,14 @@ if df_complet is not None and not df_complet.empty:
     st.markdown("### 📌 JORNADA 1")
     
     try:
-        # Busquem on està la fila de "CAMP 1"
-        mask_camp = df_complet.apply(lambda row: row.astype(str).str.contains("CAMP 1", case=False).any(), axis=1)
-        idx_camp = df_complet[mask_camp].index
+        # Busquem quina fila conté "19:15" a qualsevol cel·la
+        mask = df_complet.apply(lambda row: row.astype(str).str.contains("19:15", case=False).any(), axis=1)
+        files_trobades = df_complet[mask].index
         
-        if len(idx_camp) > 0:
-            fila_camp = idx_camp[0]
-            # Els partits estan a les 3 files exactament posteriors a la fila de "CAMP 1"
-            brut_partits = df_complet.iloc[fila_camp + 1 : fila_camp + 4, :].copy()
+        if len(files_trobades) > 0:
+            fila_inici = files_trobades[0]
+            # Agafem les 3 files a partir de la fila on apareix "19:15"
+            brut_partits = df_complet.iloc[fila_inici : fila_inici + 3, :].copy()
             
             taula_final = pd.DataFrame({
                 "Hora": brut_partits.iloc[:, 0].values,
@@ -47,7 +47,8 @@ if df_complet is not None and not df_complet.empty:
             
             st.dataframe(taula_final, use_container_width=True, hide_index=True)
         else:
-            st.warning("No s'ha trobat la taula de partits.")
+            st.warning("No s'ha trobat cap cel·la amb '19:15'. Mostrant avís de depuració:")
+            st.write(df_complet.head(10))
             
     except Exception as e:
         st.error(f"Error al carregar els partits: {e}")
