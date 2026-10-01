@@ -24,8 +24,7 @@ if df_complet is not None and not df_complet.empty:
     st.markdown("### 📌 JORNADA 1")
     
     try:
-        # Netegem la columna A convertint-la a string i buscant les hores exactes dels partits
-                        col_a = df_complet.iloc[:, 0].astype(str).str.strip()
+        col_a = df_complet.iloc[:, 0].astype(str).str.strip()
         mask_partits = col_a.isin(["19:15", "19:45", "20:15"])
         brut_partits = df_complet[mask_partits].copy()
         
