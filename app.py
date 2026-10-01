@@ -24,45 +24,41 @@ if df_complet is not None and not df_complet.empty:
     st.markdown("### 📌 JORNADA 1")
     
     try:
-        # Busquem automàticament les files que contenen les hores dels partits (porten ":")
-        mask_hores = df_complet.iloc[:, 0].astype(str).str.contains(":", na=False)
-        brut_partits = df_complet[mask_hores].copy()
+        # Extreiem directament les 3 files de partits (índexs 2, 3 i 4 del teu Google Sheets)
+        # i les columnes exactes de l'horari, jugadors de cada camp i resultats
+        brut_partits = df_complet.iloc[2:5, :].copy()
         
-        if not brut_partits.empty and brut_partits.shape[1] >= 13:
-            taula_final = pd.DataFrame({
-                "Hora": brut_partits.iloc[:, 0].values,
-                "Camp 1": brut_partits.iloc[:, 1].astype(str) + " - " + brut_partits.iloc[:, 2].astype(str),
-                "Res. C1": brut_partits.iloc[:, 3].values,
-                "Camp 2": brut_partits.iloc[:, 4].astype(str) + " - " + brut_partits.iloc[:, 5].astype(str),
-                "Res. C2": brut_partits.iloc[:, 6].values,
-                "Camp 3": brut_partits.iloc[:, 7].astype(str) + " - " + brut_partits.iloc[:, 8].astype(str),
-                "Res. C3": brut_partits.iloc[:, 9].values,
-                "Camp 4": brut_partits.iloc[:, 10].astype(str) + " - " + brut_partits.iloc[:, 11].astype(str),
-                "Res. C4": brut_partits.iloc[:, 12].values
-            })
-            st.dataframe(taula_final, use_container_width=True, hide_index=True)
-        else:
-            st.warning("No s'han trobat les files de partits automàticament.")
+        taula_final = pd.DataFrame({
+            "Hora": brut_partits.iloc[:, 0].values,
+            "Camp 1": brut_partits.iloc[:, 1].astype(str) + " - " + brut_partits.iloc[:, 2].astype(str),
+            "Res. C1": brut_partits.iloc[:, 3].values,
+            "Camp 2": brut_partits.iloc[:, 4].astype(str) + " - " + brut_partits.iloc[:, 5].astype(str),
+            "Res. C2": brut_partits.iloc[:, 6].values,
+            "Camp 3": brut_partits.iloc[:, 7].astype(str) + " - " + brut_partits.iloc[:, 8].astype(str),
+            "Res. C3": brut_partits.iloc[:, 9].values,
+            "Camp 4": brut_partits.iloc[:, 10].astype(str) + " - " + brut_partits.iloc[:, 11].astype(str),
+            "Res. C4": brut_partits.iloc[:, 12].values
+        })
+        
+        st.dataframe(taula_final, use_container_width=True, hide_index=True)
+        
     except Exception as e:
-        st.error(f"Error al processar els partits: {e}")
+        st.error(f"Error al carregar els partits: {e}")
 
     st.markdown("---")
     st.subheader("🍽️ Penalitzacions i Sopars")
     try:
-        # Busquem on comença la taula de penalitzacions cercant la paraula clau
         mask_penal = df_complet.apply(lambda row: row.astype(str).str.contains("Penalitzac", case=False).any(), axis=1)
         idx_penal = df_complet[mask_penal].index
         
         if len(idx_penal) > 0:
-            start_row = idx_penal[0] + 2 # Deixem espai per la capçalera de columnes
+            start_row = idx_penal[0] + 2 
             df_penal = df_complet.iloc[start_row:, [0, 1, 2]].copy()
             df_penal.columns = ["Jugador", "Sopar Previ", "Sopar Jornada 1"]
             df_penal = df_penal.dropna(subset=["Jugador"]).reset_index(drop=True)
             st.dataframe(df_penal, use_container_width=True, hide_index=True)
-        else:
-            st.info("No s'ha trobat la taula de penalitzacions.")
     except Exception:
-        st.info("Pendent de dades de penalització.")
+        pass
         
 else:
     st.warning("⚠️ No s'han pogut carregar les dades. Revisa els permisos del Google Sheets.")
