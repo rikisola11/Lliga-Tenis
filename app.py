@@ -24,11 +24,15 @@ if df_complet is not None and not df_complet.empty:
     st.markdown("### 📌 JORNADA 1")
     
     try:
-        col_a = df_complet.iloc[:, 0].astype(str).str.strip()
-        mask_partits = col_a.isin(["19:15", "19:45", "20:15"])
-        brut_partits = df_complet[mask_partits].copy()
+        # Busquem la fila on hi ha la capçalera "CAMP 1" per saber exactament on comencen els partits
+        mask_camp = df_complet.apply(lambda row: row.astype(str).str.contains("CAMP 1", case=False).any(), axis=1)
+        idx_camp = df_complet[mask_camp].index
         
-        if not brut_partits.empty:
+        if len(idx_camp) > 0:
+            fila_inici = idx_camp[0] + 1  # Just la fila de sota de "CAMP 1"
+            # Agafem les següents 3 files (les 3 franges horàries)
+            brut_partits = df_complet.iloc[fila_inici : fila_inici + 3, :].copy()
+            
             taula_final = pd.DataFrame({
                 "Hora": brut_partits.iloc[:, 0].values,
                 "Camp 1": brut_partits.iloc[:, 1].astype(str).str.strip() + " / " + brut_partits.iloc[:, 2].astype(str).str.strip(),
@@ -43,7 +47,7 @@ if df_complet is not None and not df_complet.empty:
             
             st.dataframe(taula_final, use_container_width=True, hide_index=True)
         else:
-            st.warning("No s'han pogut filtrar les hores dels partits.")
+            st.warning("No s'ha trobat la taula de partits.")
             
     except Exception as e:
         st.error(f"Error al carregar els partits: {e}")
