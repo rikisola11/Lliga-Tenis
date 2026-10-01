@@ -24,14 +24,14 @@ if df_complet is not None and not df_complet.empty:
     st.markdown("### 📌 JORNADA 1")
     
     try:
-        # Busquem la fila on hi ha la capçalera "CAMP 1" per saber exactament on comencen els partits
+        # Busquem on està la fila de "CAMP 1"
         mask_camp = df_complet.apply(lambda row: row.astype(str).str.contains("CAMP 1", case=False).any(), axis=1)
         idx_camp = df_complet[mask_camp].index
         
         if len(idx_camp) > 0:
-            fila_inici = idx_camp[0] + 1  # Just la fila de sota de "CAMP 1"
-            # Agafem les següents 3 files (les 3 franges horàries)
-            brut_partits = df_complet.iloc[fila_inici : fila_inici + 3, :].copy()
+            fila_camp = idx_camp[0]
+            # Els partits estan a les 3 files exactament posteriors a la fila de "CAMP 1"
+            brut_partits = df_complet.iloc[fila_camp + 1 : fila_camp + 4, :].copy()
             
             taula_final = pd.DataFrame({
                 "Hora": brut_partits.iloc[:, 0].values,
