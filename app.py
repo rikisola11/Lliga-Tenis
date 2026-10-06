@@ -14,21 +14,11 @@ jornada_seleccionada = st.selectbox("Selecciona la Jornada", jornades_disponible
 @st.cache_data(ttl=60)
 def carregar_pestanya(nom_pestanya):
     try:
-        # Intentem carregar per nom de pestanya
         url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={nom_pestanya}"
         df = pd.read_csv(url, header=None)
-        if df.empty or len(df) < 2:
-            raise Exception("Full buit")
         return df
-    except Exception:
-        try:
-            # Fallback: si falla el nom, carreguem el document principal per defecte
-            url_base = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv"
-            df = pd.read_csv(url_base, header=None)
-            return df
-        except Exception as e:
-            st.error(f"Error en la connexió amb Google Sheets: {e}")
-            return None
+    except Exception as e:
+        return None
 
 df_jornada = carregar_pestanya(jornada_seleccionada)
 
@@ -36,35 +26,36 @@ if df_jornada is not None and not df_jornada.empty:
     st.markdown(f"### 📌 {jornada_seleccionada.upper()}")
     
     try:
+        # Construcció de la taula de partits segons la teva estructura visual (Fila 2 a 4 de l'Excel)
         partits_data = []
-        for i in range(3, min(6, len(df_jornada))):
-            hora = df_jornada.iloc[i, 1] if df_jornada.shape[1] > 1 else ""
-            c1_a = df_jornada.iloc[i, 2] if df_jornada.shape[1] > 2 else ""
-            c1_b = df_jornada.iloc[i, 3] if df_jornada.shape[1] > 3 else ""
-            res_c1 = df_jornada.iloc[i, 4] if df_jornada.shape[1] > 4 else ""
+        for i in range(2, min(5, len(df_jornada))):
+            hora = df_jornada.iloc[i, 0] if pd.notna(df_jornada.iloc[i, 0]) else ""
+            c1 = df_jornada.iloc[i, 1] if pd.notna(df_jornada.iloc[i, 1]) else ""
+            c2 = df_jornada.iloc[i, 2] if pd.notna(df_jornada.iloc[i, 2]) else ""
+            res1 = df_jornada.iloc[i, 3] if pd.notna(df_jornada.iloc[i, 3]) else ""
             
-            c2_a = df_jornada.iloc[i, 5] if df_jornada.shape[1] > 5 else ""
-            c2_b = df_jornada.iloc[i, 6] if df_jornada.shape[1] > 6 else ""
-            res_c2 = df_jornada.iloc[i, 7] if df_jornada.shape[1] > 7 else ""
+            c3 = df_jornada.iloc[i, 4] if pd.notna(df_jornada.iloc[i, 4]) else ""
+            c4 = df_jornada.iloc[i, 5] if pd.notna(df_jornada.iloc[i, 5]) else ""
+            res2 = df_jornada.iloc[i, 6] if pd.notna(df_jornada.iloc[i, 6]) else ""
             
-            c3_a = df_jornada.iloc[i, 8] if df_jornada.shape[1] > 8 else ""
-            c3_b = df_jornada.iloc[i, 9] if df_jornada.shape[1] > 9 else ""
-            res_c3 = df_jornada.iloc[i, 10] if df_jornada.shape[1] > 10 else ""
+            c5 = df_jornada.iloc[i, 7] if pd.notna(df_jornada.iloc[i, 7]) else ""
+            c6 = df_jornada.iloc[i, 8] if pd.notna(df_jornada.iloc[i, 8]) else ""
+            res3 = df_jornada.iloc[i, 9] if pd.notna(df_jornada.iloc[i, 9]) else ""
             
-            c4_a = df_jornada.iloc[i, 11] if df_jornada.shape[1] > 11 else ""
-            c4_b = df_jornada.iloc[i, 12] if df_jornada.shape[1] > 12 else ""
-            res_c4 = df_jornada.iloc[i, 13] if df_jornada.shape[1] > 13 else ""
+            c7 = df_jornada.iloc[i, 10] if pd.notna(df_jornada.iloc[i, 10]) else ""
+            c8 = df_jornada.iloc[i, 11] if pd.notna(df_jornada.iloc[i, 11]) else ""
+            res4 = df_jornada.iloc[i, 12] if pd.notna(df_jornada.iloc[i, 12]) else ""
 
             partits_data.append({
                 "Hora": str(hora),
-                "Camp 1": f"{c1_a} / {c1_b}",
-                "Res. C1": str(res_c1),
-                "Camp 2": f"{c2_a} / {c2_b}",
-                "Res. C2": str(res_c2),
-                "Camp 3": f"{c3_a} / {c3_b}",
-                "Res. C3": str(res_c3),
-                "Camp 4": f"{c4_a} / {c4_b}",
-                "Res. C4": str(res_c4)
+                "Camp 1": f"{c1} / {c2}",
+                "Res. C1": str(res1),
+                "Camp 2": f"{c3} / {c4}",
+                "Res. C2": str(res2),
+                "Camp 3": f"{c5} / {c6}",
+                "Res. C3": str(res3),
+                "Camp 4": f"{c7} / {c8}",
+                "Res. C4": str(res4)
             })
             
         df_partits = pd.DataFrame(partits_data)
@@ -77,11 +68,12 @@ if df_jornada is not None and not df_jornada.empty:
     st.subheader(f"🍽️ Penalitzacions i Classificació - {jornada_seleccionada}")
     
     try:
+        # Extracció de la taula inferior de jugadors i sopars (a partir de la fila 9)
         if len(df_jornada) > 9:
-            df_penal = df_jornada.iloc[9:, [1, 2]].copy()
+            df_penal = df_jornada.iloc[9:, [0, 1]].copy()
             df_penal.columns = ["Jugador", f"Sopar {jornada_seleccionada}"]
             df_penal = df_penal.dropna(subset=["Jugador"])
-            df_penal = df_penal[df_penal["Jugador"].str.strip() != ""]
+            df_penal = df_penal[df_penal["Jugador"].astype(str).str.strip() != ""]
             df_penal = df_penal.reset_index(drop=True)
             
             if not df_penal.empty:
@@ -91,8 +83,8 @@ if df_jornada is not None and not df_jornada.empty:
         else:
             st.info("No s'ha trobat la taula inferior.")
             
-    except Exception:
-        pass
+    except Exception as e:
+        st.info("Carregant dades de classificació...")
         
 else:
-    st.warning("⚠️ No s'han pogut carregar les dades. Si us plau, comprova que Google Sheets estigui compartit públicament.")
+    st.warning("⚠️ No s'han pogut carregar les dades de Google Sheets.")
