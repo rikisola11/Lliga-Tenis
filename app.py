@@ -8,20 +8,27 @@ st.subheader("Quadre de Partits per Camps i Resultats")
 
 SHEET_ID = "1Pw6HpqMFJl_tO3XUfS_egKvF9rD_HBgD"
 
-# Definim les jornades disponibles (coincideixen amb el nom de les pestanyes del teu Google Sheets)
 jornades_disponibles = ["Jornada 1", "Jornada 2", "Jornada 3", "Jornada 4", "Jornada 5"]
 jornada_seleccionada = st.selectbox("Selecciona la Jornada", jornades_disponibles)
 
-# Funció per llegir la pestanya específica de Google Sheets
 @st.cache_data(ttl=60)
 def carregar_pestanya(nom_pestanya):
     try:
-        # Google Sheets permet descarregar pestanyes concretes mitjançant el paràmetre gid o sheet=Nom
-        url_pestanya = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={nom_pestanya}"
-        df = pd.read_csv(url_pestanya, header=None)
+        # Intentem carregar per nom de pestanya
+        url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={nom_pestanya}"
+        df = pd.read_csv(url, header=None)
+        if df.empty or len(df) < 2:
+            raise Exception("Full buit")
         return df
-    except Exception as e:
-        return None
+    except Exception:
+        try:
+            # Fallback: si falla el nom, carreguem el document principal per defecte
+            url_base = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv"
+            df = pd.read_csv(url_base, header=None)
+            return df
+        except Exception as e:
+            st.error(f"Error en la connexió amb Google Sheets: {e}")
+            return None
 
 df_jornada = carregar_pestanya(jornada_seleccionada)
 
@@ -29,8 +36,6 @@ if df_jornada is not None and not df_jornada.empty:
     st.markdown(f"### 📌 {jornada_seleccionada.upper()}")
     
     try:
-        # Extraiem la taula de partits (files 3 a 5 segons la teva nova estructura)
-        # Columna 1: Hora, Columna 2-3: Camp 1 i Resultat, Columna 4-5: Camp 2 i Resultat...
         partits_data = []
         for i in range(3, min(6, len(df_jornada))):
             hora = df_jornada.iloc[i, 1] if df_jornada.shape[1] > 1 else ""
@@ -66,30 +71,28 @@ if df_jornada is not None and not df_jornada.empty:
         st.dataframe(df_partits, use_container_width=True, hide_index=True)
         
     except Exception as e:
-        st.error(f"Error al carregar els partits d'aquesta jornada: {e}")
+        st.error(f"Error al carregar els partits: {e}")
 
     st.markdown("---")
     st.subheader(f"🍽️ Penalitzacions i Classificació - {jornada_seleccionada}")
     
     try:
-        # Busquem la taula de penalitzacions/sopars situada a la part inferior (a partir de la fila 9)
         if len(df_jornada) > 9:
             df_penal = df_jornada.iloc[9:, [1, 2]].copy()
             df_penal.columns = ["Jugador", f"Sopar {jornada_seleccionada}"]
             df_penal = df_penal.dropna(subset=["Jugador"])
-            # Filtrem files buides o brossa
             df_penal = df_penal[df_penal["Jugador"].str.strip() != ""]
             df_penal = df_penal.reset_index(drop=True)
             
             if not df_penal.empty:
                 st.dataframe(df_penal, use_container_width=True, hide_index=True)
             else:
-                st.info("No hi ha dades de classificació en aquesta pestanya encara.")
+                st.info("No hi ha dades de classificació en aquesta pestanya.")
         else:
-            st.info("No s'ha trobat la taula inferior en aquesta pestanya.")
+            st.info("No s'ha trobat la taula inferior.")
             
-    except Exception as e:
-        st.info("Carregant dades de classificació...")
+    except Exception:
+        pass
         
 else:
-    st.warning(f"⚠️ No s'ha pogut accedir a la pestanya '{jornada_seleccionada}'. Assegura't que el nom de la pestanya a Google Sheets és exactament igual.")
+    st.warning("⚠️ No s'han pogut carregar les dades. Si us plau, comprova que Google Sheets estigui compartit públicament.")
