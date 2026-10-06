@@ -27,11 +27,8 @@ if df is not None and not df.empty:
     st.markdown(f"### 📌 Quadre de Partits - {jornada_seleccionada}")
     
     try:
-        # Mostrem directament el bloc de partits de manera neta (files 2 a 5)
-        # Netejant les columnes innecessàries si n'hi ha
         if len(df) > 5:
             df_partits = df.iloc[2:5, 1:14].copy()
-            # Omplim valors NaN per evitar errors visuals
             df_partits = df_partits.fillna("")
             st.dataframe(df_partits, use_container_width=True, hide_index=True)
         else:
@@ -43,9 +40,7 @@ if df is not None and not df.empty:
     st.subheader(f"🍽️ Penalitzacions i Classificació - {jornada_seleccionada}")
     
     try:
-        # Busquem i mostrem la taula inferior de jugadors i sopars (a partir de la fila 9)
         if len(df) > 9:
-            # Agafem les columnes de jugadors i punts de sopar
             df_penal = df.iloc[9:, [1, 2]].copy()
             df_penal.columns = ["Jugador", f"Sopar {jornada_seleccionada}"]
             df_penal = df_penal.dropna(subset=["Jugador"])
@@ -56,4 +51,12 @@ if df is not None and not df.empty:
             if not df_penal.empty:
                 st.dataframe(df_penal, use_container_width=True, hide_index=True)
             else:
-                st.info("No hi ha dades a la taula de classificació d
+                st.info("No hi ha dades a la taula de classificació d'aquesta pestanya.")
+        else:
+            st.info("No s'ha trobat la taula inferior.")
+            
+    except Exception as e:
+        st.info("Carregant dades de classificació...")
+        
+else:
+    st.warning("⚠️ No s'han pogut carregar les dades de Google Sheets. Assegura't que el document és públic.")
